@@ -15,11 +15,9 @@ const WorkerForm = ({  }) => {
   const [emiratesIdFile, setEmiratesIdFile] = useState(null);
   const [error, setError] = useState("");
 
-  
   return (
     <ScrollView contentContainerStyle={styles.scrollContainer}>
-      
-
+    
         <Text style={styles.label}>Full Name</Text>
         <TextInput
           style={styles.input}
