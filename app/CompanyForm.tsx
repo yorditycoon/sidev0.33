@@ -9,19 +9,22 @@ const CompanyForm = ({  }) => {
   const [companyName, setCOMPANYName] = useState("");
   const [email, setEmail] = useState("");
   const [phone, setPhone] = useState("+971");
-  const [location, setLocation] = useState("Dubai");
+  const [location, setLocation] = useState("");
   const [password, setPassword] = useState("");
   const [cvFile, setCvFile] = useState(null);
   const [emiratesIdFile, setEmiratesIdFile] = useState(null);
   const [error, setError] = useState("");
 
+  
   return (
-    <ScrollView contentContainerStyle={styles.scrollContainer}>
-    
+    <View style={styles.container}>
+    <ScrollView contentContainerStyle={styles.scrollContainer} showsVerticalScrollIndicator={false} >
+      
+<Image source={require("..//assets/images/splash-icon.png")} style={styles.profileLogo} />
         <Text style={styles.label}>Company Name</Text>
         <TextInput
           style={styles.input}
-          placeholder="Company Name"
+          placeholder="COMPANY Name"
           value={companyName}
           onChangeText={setCOMPANYName}
         />
@@ -49,9 +52,8 @@ const CompanyForm = ({  }) => {
         <TextInput
           style={styles.input}
           placeholder="Location"
-          secureTextEntry
           value={location}
-          onChangeText={setPassword}
+          onChangeText={setLocation}
         />
 
         <Text style={styles.label}>Password</Text>
@@ -63,7 +65,7 @@ const CompanyForm = ({  }) => {
           onChangeText={setPassword}
         />
 
-        <Text style={styles.label}>Business Licence</Text>
+        <Text style={styles.label}>Business Licence </Text>
         <View style={styles.uploadContainer}>
           <TouchableOpacity style={styles.uploadButton} >
             <Image source={require("..//assets/images/upload-icon.png")} style={styles.uploadIcon} />
@@ -71,18 +73,16 @@ const CompanyForm = ({  }) => {
           </TouchableOpacity>
           <View style={styles.fileBox}><Text>{ "No file uploaded"}</Text></View>
         </View>
-
-      
         <Text style={styles.privacyText}>
                           I have read and agreed to the{" "}
-                         <Link  href="/Privacy" style={styles.link}>PrivacyPolicy</Link>
+                         <Link  href="/Privacy" style={styles.link}>Privacy and Policy</Link>
                         </Text>
         {error ? <Text style={styles.errorText}>{error}</Text> : null}
         <TouchableOpacity 
           style={styles.button} 
           onPress={() => {
-            if (!companyName || !email || !phone || !password || !cvFile  ) {
-              setError("Please fill in all fields including the Business Licence");
+            if (!companyName || !email || !phone || !password || !cvFile || !emiratesIdFile) {
+              setError("Please fill in all fields including the CV and Emirates ID");
             } else if (!/\S+@\S+\.\S+/.test(email)) {
               setError("Please enter a valid email address");
             } else if (phone.length < 9 || !/^\+?\d+$/.test(phone)) {
@@ -92,45 +92,48 @@ const CompanyForm = ({  }) => {
             }
           }}
           accessibilityRole="button"
-          accessibilityLabel="Submit Company registration"
+          accessibilityLabel="Submit worker registration"
         >
           <Text style={styles.buttonText}>Submit</Text>
         </TouchableOpacity>
     
     </ScrollView>
+    </View>
   );
 };
 
 const styles = StyleSheet.create({
   scrollContainer: {
-    flexGrow: 1,
-  },
+   },
   container: {
     flex: 1,
     justifyContent: "center",
-    alignItems: "center",
+    alignItems: "flex-start",
     backgroundColor: "#fff",
     padding: 15,
+    
   },
   label: {
     fontSize: 16,
     alignSelf: "flex-start",
-    marginBottom: 3,
+    marginBottom: 2,
   },
   input: {
-    width: "100%",
+    width: 350,
     height: 50,
     borderWidth: 1,
     borderColor: "#ccc",
     borderRadius: 10,
     paddingHorizontal: 10,
     marginBottom: 15,
+
   },
   uploadContainer: {
     flexDirection: "row",
     alignItems: "center",
     marginBottom: 15,
   },
+
   uploadButton: {
     flexDirection: "row",
     alignItems: "center",
@@ -150,6 +153,7 @@ const styles = StyleSheet.create({
     fontSize: 18,
     fontWeight: "bold",
   },
+
   pickerContainer: {
     width: "100%",
     borderWidth: 1,
@@ -158,10 +162,12 @@ const styles = StyleSheet.create({
     marginBottom: 15,
     overflow: "hidden",
   },
+
   picker: {
     width: "100%",
     height: 50,
   },
+
   fileBox: {
     width: 150,
     height: 40,
@@ -170,15 +176,18 @@ const styles = StyleSheet.create({
     alignItems: "center",
     borderRadius: 10,
   },
+
   buttonText: {
     color: "#fff",
     fontSize: 18,
     fontWeight: "bold",
   },
+
   errorText: {
     color: 'red',
     marginBottom: 5,
   },
+
   button: {
     width: "70%",
     height: 50,
@@ -187,40 +196,21 @@ const styles = StyleSheet.create({
     alignItems: "center",
     borderRadius: 50,
     marginTop: 5,
-  },
-  profileContainer: {
-    alignItems: "center",
-    
-  },
-  profileCircle: {
-    width: 120,
-    height: 120,
-    borderRadius: 60,
-    backgroundColor: "#f0f0f0",
-    justifyContent: "center",
-    alignItems: "center",
-    borderWidth: 2,
-    borderColor: "rgba(19, 65, 105, 1)",
-  },
-  profileImage: {
-    width: 120,
-    height: 120,
-    borderRadius: 60,
-  },
-  profileLogo: {
-    width: 60,
-    height: 60,
-    
-  },
-  profileText: {
-    marginTop: 8,
-    fontSize: 14,
-    color: "rgba(19, 65, 105, 1)",
+    marginLeft: 50,
   },
   
+  profileLogo: {
+    width: 80,
+    height: 80,
+    marginLeft:125,
+    marginTop: 50,  
+  },
+
   privacyText: {
     marginLeft: 5,
+    marginBottom:5,
   },
+
   link: {
     color: "#007BFF",
     textDecorationLine: "underline",
