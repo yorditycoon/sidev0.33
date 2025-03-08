@@ -6,6 +6,7 @@ export default function RootLayout() {
     <Stack.Screen name="Privacy" options={{ headerShown: false }} />
     <Stack.Screen name="CompanyForm" options={{ headerShown: false }} />
     <Stack.Screen name="WorkerForm" options={{ headerShown: false }} />
+    <Stack.Screen name="Login" options={{headerShown:false}} />
     </Stack>
     
 }

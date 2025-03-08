@@ -29,7 +29,11 @@ export default function Index() {
             <Text style={styles.signupText}>As a Worker</Text>
           </Link>
         </TouchableOpacity>
+        <Link  href="/Login">
+        <Text style={styles.loginText}>Already have an account?  Login
+       </Text></Link>
       </View>
+      
   
   );
 }
@@ -78,6 +82,8 @@ const styles = StyleSheet.create({
     marginBottom: 100,
     resizeMode: "contain",
   },
+
+ 
 });
 
 

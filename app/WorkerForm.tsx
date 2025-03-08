@@ -101,7 +101,7 @@ const CompanyForm = ({  }) => {
             }
           }}
           accessibilityRole="button"
-          accessibilityLabel="Submit worker registration"
+          accessibilityLabel="Submit company registration"
         >
           <Text style={styles.buttonText}>Submit</Text>
         </TouchableOpacity>
