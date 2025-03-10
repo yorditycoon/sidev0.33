@@ -1,40 +1,32 @@
 import React, { useState } from "react";
-
 import { View, Text, TextInput, TouchableOpacity, StyleSheet, Image, ActivityIndicator } from "react-native";
 import { Link } from "expo-router";
 import { FIREBASE_AUTH } from "../FirebaseConfig";
-import {signInWithEmailAndPassword} from"firebase/auth"
+import { signInWithEmailAndPassword } from "firebase/auth";
 
-const LoginScreen = ( ) => {
+const LoginScreen = () => {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [loading, setLoading] = useState(false);
-  const [error, setError] = useState(null);
+  const [error, setError] = useState();
   const auth = FIREBASE_AUTH;
 
-  const signIn = async () =>{
-  setLoading(true);
+  const signIn = async () => {
+    setLoading(true);
     try {
-        setLoading(true)
-    const response = await signInWithEmailAndPassword(auth, email, password);
-    console.log(response);
-
+      const response = await signInWithEmailAndPassword(auth, email, password);
+      console.log(response);
+    } catch (error) {
+      console.log(error);
+      setError("Invalid email or password");
+    } finally {
+      setLoading(false);
     }
-    catch (error) {
-        console.log(error);
-  }
-  finally{
-    setLoading(false);
-
-  }
+  };
 
   return (
     <View style={styles.container}>
-      <Image
-                style={styles.image}
-                source={require("../assets/images/splash-icon.png")}
-              />
-
+      <Image style={styles.image} source={require("../assets/images/splash-icon.png")} />
       <Text style={styles.title}>Welcome Back!</Text>
 
       <TextInput
@@ -59,18 +51,15 @@ const LoginScreen = ( ) => {
       />
 
       {error ? <Text style={styles.errorText}>{error}</Text> : null}
-      <TouchableOpacity 
-        style={styles.button} 
-       onPress={signIn}>
-        <Text style={styles.buttonText}>Login</Text>
-      </TouchableOpacity>
-      
-<Link  href="/">
-        <Text style={styles.loginText}>Don't have an account? Sign up</Text></Link>
-      
-    
-    </View>
 
+      <TouchableOpacity style={styles.button} onPress={signIn}>
+        {loading ? <ActivityIndicator color="#fff" /> : <Text style={styles.buttonText}>Login</Text>}
+      </TouchableOpacity>
+
+      <Link href="/">
+        <Text style={styles.loginText}>Don't have an account? Sign up</Text>
+      </Link>
+    </View>
   );
 };
 
@@ -84,8 +73,8 @@ const styles = StyleSheet.create({
   },
   title: {
     fontSize: 28,
-    fontWeight: 'bold',
-    color: '#000000',
+    fontWeight: "bold",
+    color: "#000000",
     marginBottom: 50,
   },
   input: {
@@ -96,7 +85,6 @@ const styles = StyleSheet.create({
     borderRadius: 10,
     paddingHorizontal: 10,
     marginBottom: 15,
-    
   },
   button: {
     width: "70%",
@@ -113,21 +101,15 @@ const styles = StyleSheet.create({
     fontSize: 18,
     fontWeight: "bold",
   },
-  switchText: {
-    fontSize: 16,
-    color: "#007bff",
-    
-  },
   errorText: {
-    color: 'red',
+    color: "red",
     marginBottom: 10,
   },
   image: {
     width: 100,
     height: 100,
-  
     marginBottom: 100,
-    resizeMode: 'contain',
+    resizeMode: "contain",
   },
   loginText: {
     marginTop: 5,
@@ -135,6 +117,5 @@ const styles = StyleSheet.create({
     color: "#007bff",
   },
 });
-}
 
 export default LoginScreen;
