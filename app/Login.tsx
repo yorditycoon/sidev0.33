@@ -1,12 +1,32 @@
 import React, { useState } from "react";
-import PropTypes from 'prop-types';
-import { View, Text, TextInput, TouchableOpacity, StyleSheet, Image } from "react-native";
+
+import { View, Text, TextInput, TouchableOpacity, StyleSheet, Image, ActivityIndicator } from "react-native";
 import { Link } from "expo-router";
+import { FIREBASE_AUTH } from "../FirebaseConfig";
+import {signInWithEmailAndPassword} from"firebase/auth"
 
 const LoginScreen = ( ) => {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
-  const [error, setError] = useState("");
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState(null);
+  const auth = FIREBASE_AUTH;
+
+  const signIn = async () =>{
+  setLoading(true);
+    try {
+        setLoading(true)
+    const response = await signInWithEmailAndPassword(auth, email, password);
+    console.log(response);
+
+    }
+    catch (error) {
+        console.log(error);
+  }
+  finally{
+    setLoading(false);
+
+  }
 
   return (
     <View style={styles.container}>
@@ -41,22 +61,16 @@ const LoginScreen = ( ) => {
       {error ? <Text style={styles.errorText}>{error}</Text> : null}
       <TouchableOpacity 
         style={styles.button} 
-        onPress={() => {
-          if (!email || !password) {
-            setError("Please fill in both email and password");
-          } else if (!/\S+@\S+\.\S+/.test(email)) {
-            setError("Please enter a valid email address (e.g., user@example.com)");
-          } else if (password.length < 8) {
-            setError("Password must be at least 8 characters");
-          }   
-        }}>
+       onPress={signIn}>
         <Text style={styles.buttonText}>Login</Text>
       </TouchableOpacity>
       
 <Link  href="/">
         <Text style={styles.loginText}>Don't have an account? Sign up</Text></Link>
       
+    
     </View>
+
   );
 };
 
@@ -121,10 +135,6 @@ const styles = StyleSheet.create({
     color: "#007bff",
   },
 });
-
-
+}
 
 export default LoginScreen;
-
-
-
