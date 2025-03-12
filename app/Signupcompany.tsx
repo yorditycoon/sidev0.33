@@ -1,26 +1,28 @@
 import React, { useState } from "react";
 import { View, Text, TextInput, TouchableOpacity, StyleSheet, Image, ActivityIndicator } from "react-native";
 import { Link } from "expo-router";
-import { getAuth, signInWithEmailAndPassword } from "firebase/auth";
-import { firebaseApp } from "@/FirebaseConfig";
 import { useRouter } from "expo-router";
+import { createUserWithEmailAndPassword, getAuth} from "firebase/auth";
+import { firebaseApp } from "@/FirebaseConfig";
+import { navigate } from "expo-router/build/global-state/routing";
 
 
-const LoginScreen = () => {
+const Signupcompany = () => {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState();
   const auth1 = getAuth(firebaseApp);
-const router = useRouter();
+  const router = useRouter(); 
+
   const handleSignup = async () => {
     setLoading(true);
     setError(null);
   
     try {
-      await signInWithEmailAndPassword(auth1, email, password);
+      await createUserWithEmailAndPassword(auth1, email, password);
       console.log("SignUp successful");
-      router.push("/JobListing")
+      router.push("/CompanyForm")
     } catch (error) {
       setError(error.message); // Display the error message
       console.error("Signup Error:", error);
@@ -33,7 +35,7 @@ const router = useRouter();
   return (
     <View style={styles.container}>
       <Image style={styles.image} source={require("../assets/images/splash-icon.png")} />
-      <Text style={styles.title}>Welcome Back!</Text>
+      <Text style={styles.title}>Sign up as company</Text>
 
       <TextInput
         style={styles.input}
@@ -59,12 +61,10 @@ const router = useRouter();
       {error ? <Text style={styles.errorText}>{error}</Text> : null}
 
       <TouchableOpacity style={styles.button} onPress={handleSignup}>
-        {loading ? <ActivityIndicator color="#fff" /> : <Text style={styles.buttonText}>Login</Text>}
+        {loading ? <ActivityIndicator color="#fff" /> : <Text style={styles.buttonText}>Sign up</Text>}
       </TouchableOpacity>
 
-      <Link href="/">
-        <Text style={styles.loginText}>Don't have an account? Sign up</Text>
-      </Link>
+      
     </View>
   );
 };
@@ -124,4 +124,4 @@ const styles = StyleSheet.create({
   },
 });
 
-export default LoginScreen;
+export default Signupcompany;

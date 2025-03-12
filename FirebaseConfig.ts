@@ -1,9 +1,11 @@
 // Import the functions you need from the SDKs you need
 import { initializeApp } from "firebase/app";
 import { getAnalytics } from "firebase/analytics";
-import {getAuth} from "firebase/auth"
+import { getAuth } from "firebase/auth";
 import { ExpoRoot } from "expo-router";
-import {getFirestore} from "firebase/firestore"
+import { getFirestore } from "firebase/firestore";
+import { getStorage } from "firebase/storage";
+
 // TODO: Add SDKs for Firebase products that you want to use
 // https://firebase.google.com/docs/web/setup#available-libraries
 
@@ -16,13 +18,15 @@ const firebaseConfig = {
   storageBucket: "side-auth.firebasestorage.app",
   messagingSenderId: "120845101828",
   appId: "1:120845101828:web:5c7069e99ca3243cfabe51",
-  measurementId: "G-ZEKT1ZXCHM"
+  measurementId: "G-ZEKT1ZXCHM",
 };
 
 // Initialize Firebase
 
-export const  FIREBASE_APP = initializeApp(firebaseConfig);
-export const FIREBASE_AUTH = getAuth(FIREBASE_APP);
-export const FIRESTORE_DB= getFirestore(FIREBASE_APP);
+const firebaseApp = initializeApp(firebaseConfig);
 
+// Get instances of Firestore and Storage
+const db = getFirestore(firebaseApp);
+const storage = getStorage(firebaseApp);
 
+export { firebaseApp, db, storage };
