@@ -25,7 +25,7 @@ export default function Index() {
 
 
         <TouchableOpacity style={styles.signupButton}>
-          <Link href="/WorkerForm">
+          <Link href="/Signupworker">
             <Text style={styles.signupText}>As a Worker</Text>
           </Link>
         </TouchableOpacity>

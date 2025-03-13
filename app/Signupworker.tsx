@@ -22,7 +22,7 @@ const Signupcompany = () => {
     try {
       await createUserWithEmailAndPassword(auth1, email, password);
       console.log("SignUp successful");
-      router.push("/CompanyForm")
+      router.push("/WorkerForm")
     } catch (error) {
       setError(error.message); // Display the error message
       console.error("Signup Error:", error);
@@ -35,7 +35,7 @@ const Signupcompany = () => {
   return (
     <View style={styles.container}>
       <Image style={styles.image} source={require("../assets/images/splash-icon.png")} />
-      <Text style={styles.title}>Sign up as company</Text>
+      <Text style={styles.title}>Sign up as Worker</Text>
 
       <TextInput
         style={styles.input}

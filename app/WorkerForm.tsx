@@ -1,43 +1,136 @@
 import React, { useState } from "react";
-import { View, Text, TextInput, TouchableOpacity, StyleSheet, Image, ScrollView,Pressable } from "react-native";
-import { Link } from "expo-router";
+import {
+  View,
+  Text,
+  TextInput,
+  TouchableOpacity,
+  StyleSheet,
+  Image,
+  ScrollView,
+  Modal,
+} from "react-native";
+import * as DocumentPicker from "expo-document-picker";
+import { WebView } from "react-native-webview";
+import {
+  getStorage,
+  ref,
+  uploadBytesResumable,
+  getDownloadURL,
+} from "firebase/storage";
+import { getFirestore, collection, addDoc } from "firebase/firestore";
+import { firebaseApp } from "../FirebaseConfig";
+import { useRouter } from "expo-router";
 
 
-const CompanyForm = ({  }) => {
-    
-  
-  const [fullName, setFullName] = useState("");
+
+
+
+
+
+const db = getFirestore(firebaseApp);
+const storage = getStorage(firebaseApp);
+
+
+const CompanyForm = () => {
+  const [companyName, setCompanyName] = useState("");
   const [email, setEmail] = useState("");
   const [phone, setPhone] = useState("+971");
   const [location, setLocation] = useState("");
   const [password, setPassword] = useState("");
-  const [cvFile, setCvFile] = useState(null);
-  const [emiratesIdFile, setEmiratesIdFile] = useState(null);
+  const [businessLicense, setBusinessLicense] = useState(null);
   const [error, setError] = useState("");
+  const [modalVisible, setModalVisible] = useState(false);
+  const router = useRouter();
 
-  
+
+  const pickDocument = async () => {
+    let result = await DocumentPicker.getDocumentAsync({
+      type: "application/pdf",
+    });
+    if (!result.canceled) {
+      setBusinessLicense(result.assets[0]);
+    }
+  };
+
+
+  const handleSubmit = async () => {
+    if (!companyName || !email || !phone || !password || !businessLicense) {
+      setError("Please fill in all fields and upload a business license.");
+      return;
+    }
+    setError("");
+
+
+    try {
+      // Upload business license to Firebase Storage
+      const storageRef = ref(
+        storage,
+        `businessLicense/${businessLicense.name}`
+      );
+      const response = await fetch(businessLicense.uri);
+      const blob = await response.blob();
+      const uploadTask = uploadBytesResumable(storageRef, blob);
+
+
+      uploadTask.on(
+        "state_changed",
+        null,
+        (error) => setError("Upload failed: " + error.message),
+        async () => {
+          const businessLicenseUrl = await getDownloadURL(
+            uploadTask.snapshot.ref
+          );
+
+
+          // Add company data to Firestore
+          await addDoc(collection(db, "companies"), {
+            companyName,
+            email,
+            phone,
+            location,
+            password,
+            businessLicenseUrl,
+          });
+          console.log("Company information submitted successfully!");
+          router.push("/JobListing")
+        }
+      );
+    } catch (error) {
+      setError("Error submitting data: " + error.message);
+    }
+  };
+
+
   return (
     <View style={styles.container}>
-    <ScrollView contentContainerStyle={styles.scrollContainer} showsVerticalScrollIndicator={false} >
-      
-<Image source={require("..//assets/images/splash-icon.png")} style={styles.profileLogo} />
+      <ScrollView
+        contentContainerStyle={styles.scrollContainer}
+        showsVerticalScrollIndicator={false}
+      >
+        <Image
+          source={require("../assets/images/splash-icon.png")}
+          style={styles.profileLogo}
+        />
+
+
         <Text style={styles.label}>Full Name</Text>
         <TextInput
           style={styles.input}
-          placeholder="Full Name"
-          value={fullName}
-          onChangeText={setFullName}
+          placeholder="Company Name"
+          value={companyName}
+          onChangeText={setCompanyName}
         />
+
 
         <Text style={styles.label}>Email Address</Text>
         <TextInput
           style={styles.input}
-          placeholder="Email Address"
+          placeholder="Email"
           keyboardType="email-address"
-          autoCapitalize="none"
           value={email}
           onChangeText={setEmail}
         />
+
 
         <Text style={styles.label}>Phone Number</Text>
         <TextInput
@@ -48,6 +141,7 @@ const CompanyForm = ({  }) => {
           onChangeText={setPhone}
         />
 
+
         <Text style={styles.label}>Location</Text>
         <TextInput
           style={styles.input}
@@ -56,77 +150,101 @@ const CompanyForm = ({  }) => {
           onChangeText={setLocation}
         />
 
-        <Text style={styles.label}>Password</Text>
-        <TextInput
-          style={styles.input}
-          placeholder="Password"
-          secureTextEntry
-          value={password}
-          onChangeText={setPassword}
-        />
+        <Text style={styles.label}>Emirate ID</Text>
+        <View style={styles.uploadContainer}>
+          <TouchableOpacity style={styles.uploadButton} onPress={pickDocument}>
+            <Image
+              source={require("../assets/images/upload-icon.png")}
+              style={styles.uploadIcon}
+            />
+            <Text style={styles.uploadText}>Upload</Text>
+        
+          </TouchableOpacity>
+
+          {businessLicense && (
+            <TouchableOpacity
+              style={styles.fileBox}
+              onPress={() => setModalVisible(true)}
+            >
+              <Text
+                numberOfLines={1}
+                style={{ color: "blue", textDecorationLine: "underline" }}
+              >
+                {businessLicense.name}
+              </Text>
+            </TouchableOpacity>
+          )}
+        </View>
 
         <Text style={styles.label}>CV</Text>
         <View style={styles.uploadContainer}>
-          <TouchableOpacity style={styles.uploadButton} >
-            <Image source={require("..//assets/images/upload-icon.png")} style={styles.uploadIcon} />
+          <TouchableOpacity style={styles.uploadButton} onPress={pickDocument}>
+            <Image
+              source={require("../assets/images/upload-icon.png")}
+              style={styles.uploadIcon}
+            />
             <Text style={styles.uploadText}>Upload</Text>
+        
           </TouchableOpacity>
-          <View style={styles.fileBox}><Text>{ "No file uploaded"}</Text></View>
+          
+          {businessLicense && (
+            <TouchableOpacity
+              style={styles.fileBox}
+              onPress={() => setModalVisible(true)}
+            >
+              <Text
+                numberOfLines={1}
+                style={{ color: "blue", textDecorationLine: "underline" }}
+              >
+                {businessLicense.name}
+              </Text>
+            </TouchableOpacity>
+          )}
         </View>
 
-        <Text style={styles.label}>Emirates ID</Text>
-        <View style={styles.uploadContainer}>
-          <TouchableOpacity style={styles.uploadButton} >
-            <Image source={require("..//assets/images/upload-icon.png")} style={styles.uploadIcon} />
-            <Text style={styles.uploadText}>Upload</Text>
-          </TouchableOpacity>
-          <View style={styles.fileBox}><Text>{ "No file uploaded"}</Text></View>
-        </View>
-        <Text style={styles.privacyText}>
-                          I have read and agreed to the{" "}
-                         <Link  href="/Privacy" style={styles.link}>Privacy and Policy</Link>
-                        </Text>
         {error ? <Text style={styles.errorText}>{error}</Text> : null}
-        <TouchableOpacity 
-          style={styles.button} 
-          onPress={() => {
-            if (!fullName || !email || !phone || !password || !cvFile || !emiratesIdFile) {
-              setError("Please fill in all fields including the CV and Emirates ID");
-            } else if (!/\S+@\S+\.\S+/.test(email)) {
-              setError("Please enter a valid email address");
-            } else if (phone.length < 9 || !/^\+?\d+$/.test(phone)) {
-              setError("Please enter a valid phone number");
-            } else if (password.length < 8) {
-              setError("Password must be at least 8 characters");
-            }
-          }}
-          accessibilityRole="button"
-          accessibilityLabel="Submit company registration"
-        >
+        <TouchableOpacity style={styles.button} onPress={handleSubmit}>
           <Text style={styles.buttonText}>Submit</Text>
         </TouchableOpacity>
-    
-    </ScrollView>
+      </ScrollView>
+
+
+      {/* Modal for PDF Preview */}
+      {businessLicense && (
+        <Modal animationType="slide" transparent={false} visible={modalVisible}>
+          <View style={{ flex: 1 }}>
+            <TouchableOpacity
+              style={styles.closeButton}
+              onPress={() => setModalVisible(false)}
+            >
+              <Text style={{ color: "white", fontSize: 18,backgroundColor:'black',textAlign: 'center',padding:10 }}>Close</Text>
+            </TouchableOpacity>
+                     
+
+
+          </View>
+        </Modal>
+      )}
     </View>
   );
 };
 
+
 const styles = StyleSheet.create({
-  scrollContainer: {
-   },
   container: {
     flex: 1,
-    justifyContent: "center",
-    alignItems: "flex-start",
+    alignItems: "center",
+    justifyContent:'center',
     backgroundColor: "#fff",
     padding: 15,
-    
   },
-  label: {
-    fontSize: 16,
-    alignSelf: "flex-start",
-    marginBottom: 2,
-  },
+  scrollContainer: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems:'center'
+  }
+  ,
+  label: { fontSize: 16, alignSelf: "flex-start", marginBottom: 2 },
   input: {
     width: 350,
     height: 50,
@@ -135,48 +253,27 @@ const styles = StyleSheet.create({
     borderRadius: 10,
     paddingHorizontal: 10,
     marginBottom: 15,
-
   },
   uploadContainer: {
     flexDirection: "row",
     alignItems: "center",
     marginBottom: 15,
   },
-
   uploadButton: {
     flexDirection: "row",
     alignItems: "center",
-    backgroundColor: "rgba(19, 65, 105, 1)",
+    backgroundColor: "#134169",
     paddingVertical: 10,
     paddingHorizontal: 40,
     borderRadius: 15,
     marginRight: 10,
   },
-  uploadIcon: {
-    width: 20,
-    height: 20,
-    marginRight: 10,
+  closeButton: {
+   
+    padding:10,
   },
-  uploadText: {
-    color: "#fff",
-    fontSize: 18,
-    fontWeight: "bold",
-  },
-
-  pickerContainer: {
-    width: "100%",
-    borderWidth: 1,
-    borderColor: "#ccc",
-    borderRadius: 10,
-    marginBottom: 15,
-    overflow: "hidden",
-  },
-
-  picker: {
-    width: "100%",
-    height: 50,
-  },
-
+  uploadIcon: { width: 20, height: 20, marginRight: 10 },
+  uploadText: { color: "#fff", fontSize: 18, fontWeight: "bold" },
   fileBox: {
     width: 150,
     height: 40,
@@ -185,47 +282,29 @@ const styles = StyleSheet.create({
     alignItems: "center",
     borderRadius: 10,
   },
-
-  buttonText: {
-    color: "#fff",
-    fontSize: 18,
-    fontWeight: "bold",
-  },
-
-  errorText: {
-    color: 'red',
-    marginBottom: 5,
-  },
-
   button: {
     width: "70%",
     height: 50,
-    backgroundColor: "rgba(19, 65, 105, 1)",
+    backgroundColor: "#134169",
     justifyContent: "center",
     alignItems: "center",
     borderRadius: 50,
     marginTop: 5,
-    marginLeft: 50,
   },
-  
+  buttonText: { color: "#fff", fontSize: 18, fontWeight: "bold" },
+  errorText: { color: "red", marginBottom: 5 },
   profileLogo: {
-    width: 80,
-    height: 80,
-    marginLeft:125,
-    marginTop: 50,  
-  },
-
-  privacyText: {
-    marginLeft: 5,
-    marginBottom:5,
-  },
-
-  link: {
-    color: "#007BFF",
-    textDecorationLine: "underline",
-  },
+   
+    width: 100,
+    height: 100,
+   
+ 
+  }
 });
 
 
-
 export default CompanyForm;
+
+
+
+

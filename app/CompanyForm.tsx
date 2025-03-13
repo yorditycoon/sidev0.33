@@ -9,7 +9,6 @@ import {
   ScrollView,
   Modal,
 } from "react-native";
-import { Link } from "expo-router";
 import * as DocumentPicker from "expo-document-picker";
 import { WebView } from "react-native-webview";
 import {
@@ -18,74 +17,89 @@ import {
   uploadBytesResumable,
   getDownloadURL,
 } from "firebase/storage";
-import { getFirestore, doc, setDoc } from "firebase/firestore";
+import { getFirestore, collection, addDoc } from "firebase/firestore";
+import { firebaseApp } from "../FirebaseConfig";
+import { useRouter } from "expo-router";
 
-import { firebaseApp, db, storage } from "../FirebaseConfig";
+
+import Pdf from "react-native-pdf";
+
+
+
+
+const db = getFirestore(firebaseApp);
+const storage = getStorage(firebaseApp);
+
 
 const CompanyForm = () => {
-  const [companyName, setCOMPANYName] = useState("");
+  const [companyName, setCompanyName] = useState("");
+  const [email, setEmail] = useState("");
   const [phone, setPhone] = useState("+971");
   const [location, setLocation] = useState("");
+  const [password, setPassword] = useState("");
   const [businessLicense, setBusinessLicense] = useState(null);
   const [error, setError] = useState("");
   const [modalVisible, setModalVisible] = useState(false);
+  const router = useRouter();
+
 
   const pickDocument = async () => {
     let result = await DocumentPicker.getDocumentAsync({
       type: "application/pdf",
     });
-
-    if (result.canceled === false) {
-      setBusinessLicense(result.assets[0]); // Store file details
+    if (!result.canceled) {
+      setBusinessLicense(result.assets[0]);
     }
   };
+
 
   const handleSubmit = async () => {
-    if (!companyName  || !phone || !businessLicense) {
+    if (!companyName || !email || !phone || !password || !businessLicense) {
       setError("Please fill in all fields and upload a business license.");
       return;
-    } else if (phone.length < 9 || !/^\+?\d+$/.test(phone)) {
-      setError("Please enter a valid phone number.");
-      return;
     }
+    setError("");
 
-    setError(""); // Clear previous errors
 
-    // Upload business license to Firebase Storage
-    const storage = getStorage(firebaseApp);
-    const storageRef = ref(storage, `businessLicenses/${businessLicense.name}`);
-    const uploadTask = uploadBytesResumable(storageRef, businessLicense.uri);
+    try {
+      // Upload business license to Firebase Storage
+      const storageRef = ref(
+        storage,
+        `businessLicense/${businessLicense.name}`
+      );
+      const response = await fetch(businessLicense.uri);
+      const blob = await response.blob();
+      const uploadTask = uploadBytesResumable(storageRef, blob);
 
-    uploadTask.on(
-      "state_changed",
-      (snapshot) => {
-        const progress =
-          (snapshot.bytesTransferred / snapshot.totalBytes) * 100;
-        console.log("Upload is " + progress + "% done");
-      },
-      (error) => {
-        console.error("Upload failed: ", error);
-      },
-      async () => {
-        const businessLicenseUrl = await getDownloadURL(
-          uploadTask.snapshot.ref
-        );
 
-        // Save form data to Firestore
-        const db = getFirestore(firebaseApp);
-        await setDoc(doc(db, "companies"), {
-          companyName,
-          
-          phone,
-          location,
-          
-          businessLicenseUrl,
-        });
+      uploadTask.on(
+        "state_changed",
+        null,
+        (error) => setError("Upload failed: " + error.message),
+        async () => {
+          const businessLicenseUrl = await getDownloadURL(
+            uploadTask.snapshot.ref
+          );
 
-        console.log("Company information submitted successfully!");
-      }
-    );
+
+          // Add company data to Firestore
+          await addDoc(collection(db, "companies"), {
+            companyName,
+            email,
+            phone,
+            location,
+            password,
+            businessLicenseUrl,
+          });
+          console.log("Company information submitted successfully!");
+          router.push("/JobListing")
+        }
+      );
+    } catch (error) {
+      setError("Error submitting data: " + error.message);
+    }
   };
+
 
   return (
     <View style={styles.container}>
@@ -98,15 +112,25 @@ const CompanyForm = () => {
           style={styles.profileLogo}
         />
 
+
         <Text style={styles.label}>Company Name</Text>
         <TextInput
           style={styles.input}
           placeholder="Company Name"
           value={companyName}
-          onChangeText={setCOMPANYName}
+          onChangeText={setCompanyName}
         />
 
-        
+
+        <Text style={styles.label}>Email Address</Text>
+        <TextInput
+          style={styles.input}
+          placeholder="Email"
+          keyboardType="email-address"
+          value={email}
+          onChangeText={setEmail}
+        />
+
 
         <Text style={styles.label}>Phone Number</Text>
         <TextInput
@@ -117,8 +141,8 @@ const CompanyForm = () => {
           onChangeText={setPhone}
         />
 
-Yonas, [3/12/2025 8:38 PM]
-<Text style={styles.label}>Location</Text>
+
+        <Text style={styles.label}>Location</Text>
         <TextInput
           style={styles.input}
           placeholder="Location"
@@ -126,7 +150,16 @@ Yonas, [3/12/2025 8:38 PM]
           onChangeText={setLocation}
         />
 
-       
+
+        <Text style={styles.label}>Password</Text>
+        <TextInput
+          style={styles.input}
+          placeholder="Password"
+          secureTextEntry
+          value={password}
+          onChangeText={setPassword}
+        />
+
 
         <Text style={styles.label}>Business License</Text>
         <View style={styles.uploadContainer}>
@@ -137,8 +170,7 @@ Yonas, [3/12/2025 8:38 PM]
             />
             <Text style={styles.uploadText}>Upload</Text>
           </TouchableOpacity>
-
-          {businessLicense ? (
+          {businessLicense && (
             <TouchableOpacity
               style={styles.fileBox}
               onPress={() => setModalVisible(true)}
@@ -150,26 +182,16 @@ Yonas, [3/12/2025 8:38 PM]
                 {businessLicense.name}
               </Text>
             </TouchableOpacity>
-          ) : (
-            <View style={styles.fileBox}>
-              <Text>No file uploaded</Text>
-            </View>
           )}
         </View>
 
-        <Text style={styles.privacyText}>
-          I have read and agreed to the{" "}
-          <Link href="/Privacy" style={styles.link}>
-            Privacy and Policy
-          </Link>
-        </Text>
 
         {error ? <Text style={styles.errorText}>{error}</Text> : null}
-
         <TouchableOpacity style={styles.button} onPress={handleSubmit}>
           <Text style={styles.buttonText}>Submit</Text>
         </TouchableOpacity>
       </ScrollView>
+
 
       {/* Modal for PDF Preview */}
       {businessLicense && (
@@ -179,12 +201,11 @@ Yonas, [3/12/2025 8:38 PM]
               style={styles.closeButton}
               onPress={() => setModalVisible(false)}
             >
-              <Text style={{ color: "white", fontSize: 18 }}>Close</Text>
+              <Text style={{ color: "white", fontSize: 18,backgroundColor:'black',textAlign: 'center',padding:10 }}>Close</Text>
             </TouchableOpacity>
-            <WebView
-              source={{ uri: businessLicense.uri }}
-              style={{ flex: 1 }}
-            />
+                     
+
+
           </View>
         </Modal>
       )}
@@ -194,19 +215,20 @@ Yonas, [3/12/2025 8:38 PM]
 
 
 const styles = StyleSheet.create({
-  scrollContainer: {},
   container: {
     flex: 1,
-    justifyContent: "center",
     alignItems: "center",
+    justifyContent:'center',
     backgroundColor: "#fff",
     padding: 15,
   },
-  label: {
-    fontSize: 16,
-    alignSelf: "flex-start",
-    marginBottom: 2,
-  },
+  scrollContainer: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems:'center'
+  }
+  ,
+  label: { fontSize: 16, alignSelf: "flex-start", marginBottom: 2 },
   input: {
     width: 350,
     height: 50,
@@ -224,22 +246,18 @@ const styles = StyleSheet.create({
   uploadButton: {
     flexDirection: "row",
     alignItems: "center",
-    backgroundColor: "rgba(19, 65, 105, 1)",
+    backgroundColor: "#134169",
     paddingVertical: 10,
     paddingHorizontal: 40,
     borderRadius: 15,
     marginRight: 10,
   },
-  uploadIcon: {
-    width: 20,
-    height: 20,
-    marginRight: 10,
+  closeButton: {
+   
+    padding:10,
   },
-  uploadText: {
-    color: "#fff",
-    fontSize: 18,
-    fontWeight: "bold",
-  },
+  uploadIcon: { width: 20, height: 20, marginRight: 10 },
+  uploadText: { color: "#fff", fontSize: 18, fontWeight: "bold" },
   fileBox: {
     width: 150,
     height: 40,
@@ -247,47 +265,30 @@ const styles = StyleSheet.create({
     justifyContent: "center",
     alignItems: "center",
     borderRadius: 10,
-    paddingHorizontal: 5,
-  },
-  buttonText: {
-    color: "#fff",
-    fontSize: 18,
-    fontWeight: "bold",
-  },
-  errorText: {
-    color: "red",
-    marginBottom: 5,
   },
   button: {
     width: "70%",
     height: 50,
-    backgroundColor: "rgba(19, 65, 105, 1)",
+    backgroundColor: "#134169",
     justifyContent: "center",
     alignItems: "center",
     borderRadius: 50,
     marginTop: 5,
-    marginLeft: 50,
   },
+  buttonText: { color: "#fff", fontSize: 18, fontWeight: "bold" },
+  errorText: { color: "red", marginBottom: 5 },
   profileLogo: {
-    width: 80,
-    height: 80,
-    marginLeft: 125,
-    marginTop: 100,
-    marginBottom:100,
-  },
-  privacyText: {
-    marginLeft: 5,
-    marginBottom: 5,
-  },
-  link: {
-    color: "#007BFF",
-    textDecorationLine: "underline",
-  },
-  closeButton: {
-    backgroundColor: "black",
-    padding: 10,
-    alignItems: "center",
-  },
+   
+    width: 100,
+    height: 100,
+   
+ 
+  }
 });
 
+
 export default CompanyForm;
+
+
+
+
