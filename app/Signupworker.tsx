@@ -1,37 +1,42 @@
 import React, { useState } from "react";
 import { View, Text, TextInput, TouchableOpacity, StyleSheet, Image, ActivityIndicator } from "react-native";
-import { Link } from "expo-router";
 import { useRouter } from "expo-router";
-import { createUserWithEmailAndPassword, getAuth} from "firebase/auth";
-import { firebaseApp } from "../FirebaseConfig";
-import { navigate } from "expo-router/build/global-state/routing";
-
+import { createUserWithEmailAndPassword } from "firebase/auth";
+import { setDoc, doc } from "firebase/firestore";
+import { auth, firestore } from "../FireBaseConfig";  // Ensure this file correctly initializes Firebase
 
 const Signupcompany = () => {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [loading, setLoading] = useState(false);
-  const [error, setError] = useState();
-  const auth1 = getAuth(firebaseApp);
-  const router = useRouter(); 
+  const [error, setError] = useState(null);
+  const router = useRouter();
 
   const handleSignup = async () => {
-    setLoading(true);
-    setError(null);
+      setLoading(true);
+      setError(null);
   
-    try {
-      await createUserWithEmailAndPassword(auth1, email, password);
-      console.log("SignUp successful");
-      router.push("/WorkerForm")
-    } catch (error) {
-      setError(error.message); // Display the error message
-      console.error("Signup Error:", error);
-    } finally {
-      setLoading(false);
-    }
-  };
+      try {
+        const userCredential = await createUserWithEmailAndPassword(auth, email, password);
+        const user = userCredential.user;
   
- 
+        // ✅ Create Firestore document with user UID
+        await setDoc(doc(firestore, "workers", user.uid), {
+          email,
+          userType: "worker",  
+          createdAt: new Date(),
+        });
+  
+        console.log("SignUp successful");
+        router.push("/WorkerForm");  // Redirect to the form page
+      } catch (error) {
+        setError(error.message);
+        console.error("Signup Error:", error);
+      } finally {
+        setLoading(false);
+      }
+    };
+
   return (
     <View style={styles.container}>
       <Image style={styles.image} source={require("../assets/images/splash-icon.png")} />
@@ -44,8 +49,6 @@ const Signupcompany = () => {
         autoCapitalize="none"
         value={email}
         onChangeText={setEmail}
-        accessibilityLabel="Email input"
-        accessibilityHint="Enter your email address"
       />
 
       <TextInput
@@ -54,17 +57,13 @@ const Signupcompany = () => {
         secureTextEntry
         value={password}
         onChangeText={setPassword}
-        accessibilityLabel="Password input"
-        accessibilityHint="Enter your password"
       />
 
       {error ? <Text style={styles.errorText}>{error}</Text> : null}
 
-      <TouchableOpacity style={styles.button} onPress={handleSignup}>
+      <TouchableOpacity style={styles.button} onPress={handleSignup} disabled={loading}>
         {loading ? <ActivityIndicator color="#fff" /> : <Text style={styles.buttonText}>Sign up</Text>}
       </TouchableOpacity>
-
-      
     </View>
   );
 };
@@ -116,11 +115,6 @@ const styles = StyleSheet.create({
     height: 100,
     marginBottom: 100,
     resizeMode: "contain",
-  },
-  loginText: {
-    marginTop: 5,
-    fontSize: 16,
-    color: "#007bff",
   },
 });
 

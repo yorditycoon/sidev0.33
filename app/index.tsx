@@ -1,42 +1,44 @@
 import { Link } from "expo-router";
 import { Image, Text, TouchableOpacity, View, StyleSheet } from "react-native";
-
-
+import { auth } from "../FireBaseConfig";
+import { onAuthStateChanged } from "firebase/auth";
+import { useNavigation } from "@react-navigation/native";
+import { useEffect } from "react";
 
 export default function Index() {
+  const navigation = useNavigation();
+
+  
   return (
     <View style={styles.container}>
-      
-        <Image
-          style={styles.image}
-          source={require("../assets/images/splash-icon.png")}
-        />
+      <Image
+        style={styles.image}
+        source={require("../assets/images/splash-icon.png")}
+      />
 
+      <Text style={styles.title}>Register Now</Text>
 
-        <Text style={styles.title}>Register Now</Text>
+      <TouchableOpacity
+        style={styles.signupButton}
+        onPress={() => navigation.navigate("Signupcompany")}
+      >
+        <Text style={styles.signupText}>As a Company</Text>
+      </TouchableOpacity>
 
+      <TouchableOpacity
+        style={styles.signupButton}
+        onPress={() => navigation.navigate("Signupworker")}
+      >
+        <Text style={styles.signupText}>As a Worker</Text>
+      </TouchableOpacity>
 
-        <TouchableOpacity style={styles.signupButton}>
-          <Link href="/Signupcompany">
-            <Text style={styles.signupText}>As a Company</Text>
-          </Link>
-        
-        </TouchableOpacity>
-
-
-        <TouchableOpacity style={styles.signupButton}>
-          <Link href="/Signupworker">
-            <Text style={styles.signupText}>As a Worker</Text>
-          </Link>
-        </TouchableOpacity>
-        <Link  href="/Login">
-        <Text style={styles.loginText}>Already have an account?  Login
-       </Text></Link>
-      </View>
-      
-  
+      <Link href="/Login">
+        <Text style={styles.loginText}>Already have an account? Login</Text>
+      </Link>
+    </View>
   );
 }
+
 const styles = StyleSheet.create({
   container: {
     flex: 1,
@@ -45,8 +47,6 @@ const styles = StyleSheet.create({
     padding: 8,
     backgroundColor: "#fff",
   },
-
-
   title: {
     fontSize: 28,
     fontWeight: "bold",
@@ -54,7 +54,7 @@ const styles = StyleSheet.create({
     marginBottom: 100,
   },
   signupButton: {
-    width: 300,
+    width: "70%",
     height: 60,
     backgroundColor: "rgba(19, 65, 105, 1)",
     justifyContent: "center",
@@ -64,10 +64,7 @@ const styles = StyleSheet.create({
   },
   signupText: {
     color: "#fff",
-    width: 250,
-    textAlign: "center",
     fontSize: 18,
-    padding: 0,
     fontWeight: "bold",
   },
   loginText: {
@@ -78,12 +75,7 @@ const styles = StyleSheet.create({
   image: {
     width: 100,
     height: 100,
-    marginTop: 0,
     marginBottom: 100,
     resizeMode: "contain",
   },
-
- 
 });
-
-

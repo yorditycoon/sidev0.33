@@ -1,34 +1,16 @@
 import React, { useState } from "react";
-import {
-  View,
-  Text,
-  TextInput,
-  TouchableOpacity,
-  StyleSheet,
-  Image,
-  ScrollView,
-  Modal,
-} from "react-native";
+import {View,Text,TextInput,TouchableOpacity,StyleSheet,Image,ScrollView,Modal,} from "react-native";
 import * as DocumentPicker from "expo-document-picker";
-import { WebView } from "react-native-webview";
-import {
-  getStorage,
-  ref,
-  uploadBytesResumable,
-  getDownloadURL,
-} from "firebase/storage";
-import { getFirestore, collection, addDoc } from "firebase/firestore";
-import { firebaseApp } from "../FirebaseConfig";
+import {getStorage,ref,uploadBytesResumable,getDownloadURL,} from "firebase/storage";
+import { getFirestore, collection, addDoc,setDoc,doc } from "firebase/firestore";
+import { firebaseApp } from "../FireBaseConfig";
 import { useRouter } from "expo-router";
-
-
-import Pdf from "react-native-pdf";
-
-
+import { getAuth} from "firebase/auth";
 
 
 const db = getFirestore(firebaseApp);
 const storage = getStorage(firebaseApp);
+
 
 
 const CompanyForm = () => {
@@ -59,46 +41,48 @@ const CompanyForm = () => {
       return;
     }
     setError("");
-
-
+  
     try {
+      // Get current authenticated user (to get the UID)
+      const auth = getAuth();
+const user = auth.currentUser;
+
+      if (!user) {
+        setError("User not found. Please log in again.");
+        return;
+      }
+  
       // Upload business license to Firebase Storage
-      const storageRef = ref(
-        storage,
-        `businessLicense/${businessLicense.name}`
-      );
+      const storageRef = ref(storage, `businessLicense/${user.uid}-${businessLicense.name}`);
       const response = await fetch(businessLicense.uri);
       const blob = await response.blob();
       const uploadTask = uploadBytesResumable(storageRef, blob);
-
-
+  
       uploadTask.on(
         "state_changed",
         null,
         (error) => setError("Upload failed: " + error.message),
         async () => {
-          const businessLicenseUrl = await getDownloadURL(
-            uploadTask.snapshot.ref
-          );
-
-
-          // Add company data to Firestore
-          await addDoc(collection(db, "companies"), {
+          const businessLicenseUrl = await getDownloadURL(uploadTask.snapshot.ref);
+  
+          // ✅ Update the existing Firestore document with additional company data
+          await setDoc(doc(db, "companies", user.uid), {
             companyName,
-            email,
             phone,
             location,
-            password,
+            password, // ⚠️ Consider hashing the password before storing it
             businessLicenseUrl,
-          });
-          console.log("Company information submitted successfully!");
-          router.push("/JobListing")
+          }, { merge: true }); // 🔥 Merge to avoid overwriting previous data
+  
+          console.log("Company information updated successfully!");
+          router.push("/Privacy");
         }
       );
     } catch (error) {
       setError("Error submitting data: " + error.message);
     }
   };
+  
 
 
   return (
@@ -288,7 +272,6 @@ const styles = StyleSheet.create({
 
 
 export default CompanyForm;
-
 
 
 

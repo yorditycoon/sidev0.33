@@ -1,35 +1,92 @@
-import React, { useState } from "react";
-import { View, Text, TextInput, TouchableOpacity, StyleSheet, Image, ActivityIndicator } from "react-native";
-import { Link } from "expo-router";
-import { getAuth, signInWithEmailAndPassword } from "firebase/auth";
-import { firebaseApp } from "@/FirebaseConfig";
-import { useRouter } from "expo-router";
-
+import React, { useState, useEffect } from "react";
+import {
+  View,
+  Text,
+  TextInput,
+  TouchableOpacity,
+  StyleSheet,
+  Image,
+  ActivityIndicator,
+} from "react-native";
+import { Link, useRouter } from "expo-router";
+import { getAuth, onAuthStateChanged, signOut, signInWithEmailAndPassword } from "firebase/auth";
+import { getDoc, doc } from "firebase/firestore";
+import { auth, firestore } from "../FireBaseConfig"; // Import from firebaseConfig
 
 const LoginScreen = () => {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [loading, setLoading] = useState(false);
-  const [error, setError] = useState();
-  const auth1 = getAuth(firebaseApp);
-const router = useRouter();
-  const handleSignup = async () => {
+  const [error, setError] = useState(null);
+  const router = useRouter();
+
+  useEffect(() => {
+    const unsubscribe = onAuthStateChanged(auth, async (user) => {
+      console.log("Auth state changed:", user); // Log the user object
+      if (user) {
+        try {
+          await user.reload(); // Ensure user session is valid
+          console.log("User session reloaded, redirecting...");
+          redirectToDashboard(user.uid);
+        } catch (error) {
+          console.log("User session invalid, logging out...", error);
+          await signOut(auth);
+          router.push("/");
+        }
+      } else {
+        console.log("No user signed in.");
+      }
+    });
+
+    return () => unsubscribe();
+  }, []);
+
+  const redirectToDashboard = async (userId) => {
+    console.log("Redirecting to dashboard, userId:", userId);
+    try {
+      // First, check if the user exists in the "companies" collection
+      let userDoc = await getDoc(doc(firestore, "companies", userId));
+      if (userDoc.exists()) {
+        const userData = userDoc.data(); // Log the document data
+        console.log("Company User Data:", userData);
+        const userType = userData.userType;
+        if (userType === "company") {
+          router.push("/Privacy");
+        }
+      } else {
+        // If not found in companies, check the "workers" collection
+        userDoc = await getDoc(doc(firestore, "workers", userId));
+        if (userDoc.exists()) {
+          const userData = userDoc.data();
+          console.log("Worker User Data:", userData);
+          router.push("./Worker");
+        } else {
+          console.log("User document not found in both collections.");
+          setError("User not found.");
+        }
+      }
+    } catch (error) {
+      console.error("Error fetching user data:", error);
+      setError("Failed to load user data.");
+    }
+  };
+
+  const handleLogin = async () => {
     setLoading(true);
     setError(null);
-  
     try {
-      await signInWithEmailAndPassword(auth1, email, password);
-      console.log("SignUp successful");
-      router.push("/JobListing")
+      const userCredential = await signInWithEmailAndPassword(auth, email, password);
+      const user = userCredential.user;
+      console.log("User logged in:", user);
+      redirectToDashboard(user.uid);
     } catch (error) {
-      setError(error.message); // Display the error message
-      console.error("Signup Error:", error);
+      console.error("Login failed:", error);
+      setError(error.message);
     } finally {
       setLoading(false);
     }
   };
-  
- 
+
   return (
     <View style={styles.container}>
       <Image style={styles.image} source={require("../assets/images/splash-icon.png")} />
@@ -42,8 +99,6 @@ const router = useRouter();
         autoCapitalize="none"
         value={email}
         onChangeText={setEmail}
-        accessibilityLabel="Email input"
-        accessibilityHint="Enter your email address"
       />
 
       <TextInput
@@ -52,13 +107,11 @@ const router = useRouter();
         secureTextEntry
         value={password}
         onChangeText={setPassword}
-        accessibilityLabel="Password input"
-        accessibilityHint="Enter your password"
       />
 
       {error ? <Text style={styles.errorText}>{error}</Text> : null}
 
-      <TouchableOpacity style={styles.button} onPress={handleSignup}>
+      <TouchableOpacity style={styles.button} onPress={handleLogin} disabled={loading}>
         {loading ? <ActivityIndicator color="#fff" /> : <Text style={styles.buttonText}>Login</Text>}
       </TouchableOpacity>
 
@@ -80,7 +133,7 @@ const styles = StyleSheet.create({
   title: {
     fontSize: 28,
     fontWeight: "bold",
-    color: "#000000",
+    color: "#000",
     marginBottom: 50,
   },
   input: {

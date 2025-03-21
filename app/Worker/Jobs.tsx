@@ -103,10 +103,20 @@ const styles = StyleSheet.create({
        borderRadius: 8,
         elevation: 2 
       },
-  jobHeader: { flexDirection: "row", justifyContent: "space-between" },
-  jobTitle: { fontSize: 16, fontWeight: "bold" },
-  jobLocation: { color: "gray" },
-  jobSalary: { fontWeight: "bold" },
+  jobHeader: {
+     flexDirection: "row",  
+    justifyContent: "space-between" 
+  },
+  jobTitle: {
+     fontSize: 16, 
+     fontWeight: "bold"
+     },
+  jobLocation: {
+     color: "gray" 
+    },
+  jobSalary: { 
+    fontWeight: "bold"
+   },
   scheduleContainer: { marginTop: 8, backgroundColor: "#f5f5f5", padding: 8, borderRadius: 6 },
   scheduleText: { fontSize: 14, fontWeight: "500" },
   postedText: { color: "gray", fontSize: 12, marginTop: 8 },
