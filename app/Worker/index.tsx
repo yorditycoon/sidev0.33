@@ -282,9 +282,7 @@ const styles = StyleSheet.create({
   Designation:{
 flexDirection:"column",
   },
-
- 
-  
+   
   dropdownButton: {
     backgroundColor: "#09b9e6",
     padding: 10,

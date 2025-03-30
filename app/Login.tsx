@@ -16,7 +16,7 @@ import { auth, firestore } from "../FireBaseConfig"; // Import from firebaseConf
 const LoginScreen = () => {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
-  const [loading, setLoading] = useState(false);
+  const [loading, setLoading] = useState(false);  
   const [error, setError] = useState(null);
   const router = useRouter();
 
@@ -51,7 +51,7 @@ const LoginScreen = () => {
         console.log("Company User Data:", userData);
         const userType = userData.userType;
         if (userType === "company") {
-          router.push("/Privacy");
+          router.push("/Company");
         }
       } else {
         // If not found in companies, check the "workers" collection
